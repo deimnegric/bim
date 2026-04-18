@@ -360,6 +360,31 @@
             list.appendChild(div);
         });
     }
+    // --- BİLDİRİM KAYIT VE İZİN SİSTEMİ ---
+const messaging = firebase.messaging();
+
+function setupNotifications() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then((registration) => {
+            messaging.getToken({ 
+                serviceWorkerRegistration: registration,
+                vapidKey: "fgArsp94qOXNNZ50gDmLJGONzI99X_WOwnqJrCA-HQ4" // Senin anahtarın
+            }).then((currentToken) => {
+                if (currentToken) {
+                    console.log("Bildirim Tokeni Alındı:", currentToken);
+                    // Bu tokeni Firebase'de bir 'tokens' altına kaydedebilirsin ki kimlere bildirim gideceği bilinsin
+                    firebase.database().ref('tokens').child(currentToken).set(true);
+                }
+            });
+        });
+    }
+}
+
+// Giriş yapınca veya sayfa açılınca izin iste
+if (isAdmin) {
+    setupNotifications();
+                 }
+    
 </script>
 </body>
 </html>
