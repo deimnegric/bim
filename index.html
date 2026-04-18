@@ -10,6 +10,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b0b0b">
     
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <style>
         :root {
             --bg: #0b0b0b;
@@ -172,7 +175,21 @@
 </div>
 
 <script>
-    let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+    // Firebase Yapılandırması
+    const firebaseConfig = {
+        apiKey: "AIzaSyB40uhJRRzf-7_Id7__l5babzus4u_U3Zg",
+        authDomain: "ya-rabbim.firebaseapp.com",
+        databaseURL: "https://ya-rabbim-default-rtdb.firebaseio.com",
+        projectId: "ya-rabbim",
+        storageBucket: "ya-rabbim.firebasestorage.app",
+        messagingSenderId: "1012195345128",
+        appId: "1:1012195345128:web:4095d72243f9e0d5d8bf5d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref('tasks');
+
+    let tasks = [];
     let isAdmin = localStorage.getItem('isAdmin') === 'true';
     let selectedGroup = ""; 
     let selectedColor = "";
@@ -180,7 +197,15 @@
     let editTaskId = null;
     let pressTimer;
 
-    function init() { updateUI(); render(); }
+    function init() {
+        updateUI();
+        // Verileri Firebase'den Canlı Dinle
+        db.on('value', (snapshot) => {
+            const data = snapshot.val();
+            tasks = data ? Object.keys(data).map(key => ({ ...data[key], id: key })) : [];
+            render();
+        });
+    }
 
     function updateUI() {
         const panel = document.getElementById('adminPanel');
@@ -227,21 +252,25 @@
         const d = document.getElementById('taskTime');
         if (!t.value.trim()) return;
 
+        const taskData = {
+            title: t.value,
+            group: selectedGroup,
+            groupColor: selectedColor,
+            time: d.value,
+            isPinned: false, // Yeni eklenende varsayılan false, düzenlemede mevcut korunacak
+            created: new Date().toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
+        };
+
         if (editTaskId) {
-            const idx = tasks.findIndex(x => x.id === editTaskId);
-            if (idx !== -1) {
-                tasks[idx].title = t.value; tasks[idx].group = selectedGroup;
-                tasks[idx].groupColor = selectedColor; tasks[idx].time = d.value;
-            }
+            // Düzenleme yaparken pin durumunu kaybetmemek için mevcut pini alıyoruz
+            const currentTask = tasks.find(x => x.id === editTaskId);
+            taskData.isPinned = currentTask ? currentTask.isPinned : false;
+            db.child(editTaskId).update(taskData);
             editTaskId = null;
         } else {
-            tasks.push({
-                id: Date.now(), title: t.value, group: selectedGroup, groupColor: selectedColor,
-                time: d.value, isPinned: false,
-                created: new Date().toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
-            });
+            db.push(taskData);
         }
-        resetForm(); saveAndRender();
+        resetForm();
     }
 
     function resetForm() {
@@ -250,7 +279,9 @@
         document.getElementById('mainSubmitBtn').innerText = "LİSTEYE FIRLAT";
         document.getElementById('mainSubmitBtn').classList.remove('update-mode');
         selectedGroup = ""; selectedColor = "";
-        document.querySelectorAll('#adminPanel .tag-btn').forEach(b => b.className = 'tag-btn');
+        document.querySelectorAll('#adminPanel .tag-btn').forEach(b => {
+            b.classList.remove('active', 'red', 'green', 'yellow', 'blue');
+        });
     }
 
     function editTask(id) {
@@ -268,21 +299,23 @@
     function togglePin(id) {
         if (!isAdmin) return;
         const task = tasks.find(x => x.id === id);
-        if (task) { task.isPinned = !task.isPinned; saveAndRender(); }
+        if (task) {
+            db.child(id).update({ isPinned: !task.isPinned });
+        }
     }
 
     function deleteTask(id) {
         if (!isAdmin || !confirm('Silinsin mi?')) return;
-        tasks = tasks.filter(x => x.id !== id);
-        saveAndRender();
+        db.child(id).remove();
+        if (editTaskId === id) resetForm();
     }
 
-    function saveAndRender() { localStorage.setItem('myTasks', JSON.stringify(tasks)); render(); }
-
-    function startPress(id) { if(isAdmin) pressTimer = setTimeout(() => {
-        navigator.vibrate?.(50);
-        togglePin(id);
-    }, 600); }
+    function startPress(id) { 
+        if(isAdmin) pressTimer = setTimeout(() => {
+            if(navigator.vibrate) navigator.vibrate(50);
+            togglePin(id);
+        }, 600); 
+    }
     function endPress() { clearTimeout(pressTimer); }
 
     function trLower(str) { return str.replace(/İ/g, "i").replace(/I/g, "ı").toLowerCase(); }
@@ -296,7 +329,8 @@
             return trLower(item.title).includes(searchVal) && (activeFilter === "" || item.group === activeFilter);
         });
 
-        filtered.sort((a,b) => (a.isPinned === b.isPinned) ? b.id - a.id : b.isPinned - a.isPinned)
+        // Pinli olanlar üstte, sonra id'ye göre (yeni gelen alta veya üste tercihe göre)
+        filtered.sort((a,b) => (a.isPinned === b.isPinned) ? (b.id > a.id ? 1 : -1) : b.isPinned - a.isPinned)
         .forEach(item => {
             const div = document.createElement('div');
             div.className = `task-item ${item.isPinned ? 'pinned' : ''}`;
@@ -319,8 +353,8 @@
                 </div>
                 ${isAdmin ? `
                 <div class="action-btns">
-                    <button class="btn-small edit-btn" onclick="event.stopPropagation(); editTask(${item.id})">⚙️</button>
-                    <button class="btn-small del-btn" onclick="event.stopPropagation(); deleteTask(${item.id})">✕</button>
+                    <button class="btn-small edit-btn" onclick="event.stopPropagation(); editTask('${item.id}')">⚙️</button>
+                    <button class="btn-small del-btn" onclick="event.stopPropagation(); deleteTask('${item.id}')">✕</button>
                 </div>` : ''}
             `;
             list.appendChild(div);
