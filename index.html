@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>ya rabBİM</title>
-    <link rel="icon" type="image/png" href="https://files.oaiusercontent.com/file-mX0H9D8a8P23Q0L97lXW3U?se=2024-10-18T14%3A49%3A42Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1a7114b0-681b-4f9e-bc28-76672322d861.webp&sig=6Yy8Y6N0EAnX5w7hXw7hXw7hXw7hXw7hXw7hXw7hXw7hXw%3D">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,131 +13,38 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
 
     <style>
-        :root {
-            --bg: #0b0b0b;
-            --card: #161616;
-            --accent: #2ecc71;
-            --red: #ff4d4d;
-            --yellow: #f1c40f;
-            --blue: #00d2ff;
-            --text: #f0f0f0;
-            --gray: #666;
-        }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            padding: env(safe-area-inset-top) 15px 15px 15px; 
-            margin: 0; 
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        :root { --bg: #0b0b0b; --card: #161616; --accent: #2ecc71; --red: #ff4d4d; --yellow: #f1c40f; --blue: #00d2ff; --text: #f0f0f0; --gray: #666; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: env(safe-area-inset-top) 15px 15px 15px; margin: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 500px; margin: auto; display: flex; flex-direction: column; }
+        h2 { text-align: center; color: var(--accent); margin: 20px 0; letter-spacing: 3px; font-weight: 700; }
         
-        h2 { 
-            text-align: center; 
-            color: var(--accent); 
-            margin: 20px 0; 
-            letter-spacing: 3px; 
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
-        }
-        
-        #adminPanel, #filterSection { 
-            background: var(--card); 
-            padding: 18px; 
-            border-radius: 16px; 
-            border: 1px solid #222; 
-            margin-bottom: 15px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
+        #adminPanel, #filterSection { background: var(--card); padding: 18px; border-radius: 16px; border: 1px solid #222; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         #adminPanel { order: 1; display: none; }
         #filterSection { order: 2; }
         #taskList { order: 3; }
 
-        input, button { 
-            width: 100%; 
-            padding: 14px; 
-            margin-top: 10px; 
-            border-radius: 12px; 
-            border: 1px solid #333; 
-            background: #000; 
-            color: white; 
-            box-sizing: border-box; 
-            outline: none; 
-            font-size: 16px; 
-        }
-
+        input, button { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; outline: none; font-size: 16px; }
         input:focus { border-color: var(--accent); }
         
-        .tag-group { 
-            display: flex; 
-            gap: 8px; 
-            margin-top: 12px; 
-            overflow-x: auto; 
-            padding-bottom: 8px; 
-            scrollbar-width: none; 
-        }
-        .tag-group::-webkit-scrollbar { display: none; }
-
-        .tag-btn { 
-            padding: 8px 14px; 
-            font-size: 12px; 
-            background: #222; 
-            border: 1px solid #333; 
-            cursor: pointer; 
-            color: #999; 
-            border-radius: 8px; 
-            white-space: nowrap; 
-            width: auto;
-            margin-top: 0;
-            font-weight: 600;
-        }
-        
+        .tag-group { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+        .tag-btn { padding: 8px 14px; font-size: 12px; background: #222; border: 1px solid #333; cursor: pointer; color: #999; border-radius: 8px; white-space: nowrap; width: auto; font-weight: 600; }
         .tag-btn.active.red { border-color: var(--red); color: var(--red); background: rgba(255,77,77,0.1); }
         .tag-btn.active.green { border-color: var(--accent); color: var(--accent); background: rgba(46,204,113,0.1); }
         .tag-btn.active.yellow { border-color: var(--yellow); color: var(--yellow); background: rgba(241,196,15,0.1); }
         .tag-btn.active.blue { border-color: var(--blue); color: var(--blue); background: rgba(0,210,255,0.1); }
 
-        .add-btn { background: var(--accent); border: none; font-weight: 800; cursor: pointer; color: #000; margin-top: 15px; }
-        .update-mode { background: var(--blue) !important; }
+        .add-btn { background: var(--accent); border: none; font-weight: 800; color: #000; cursor: pointer; }
+        .notify-btn { background: var(--blue); border: none; font-weight: 800; color: #000; margin-top: 5px; }
 
-        .task-item { 
-            background: var(--card); 
-            padding: 16px; 
-            margin-bottom: 12px; 
-            border-radius: 14px; 
-            border: 1px solid #222; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
+        .task-item { background: var(--card); padding: 16px; margin-bottom: 12px; border-radius: 14px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
         .task-item.pinned { border-left: 5px solid var(--yellow); background: #1a1a10; }
-        
-        .task-info { flex-grow: 1; min-width: 0; padding-right: 10px; }
-        .task-title { font-size: 16px; font-weight: 600; display: block; margin-bottom: 5px; line-height: 1.4; overflow-wrap: break-word; }
-        
+        .task-info { flex-grow: 1; }
         .group-tag { font-weight: 800; text-transform: uppercase; margin-right: 6px; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; }
-        .tag-red { color: var(--red); }
-        .tag-green { color: var(--accent); }
-        .tag-yellow { color: var(--yellow); }
-        .tag-blue { color: var(--blue); }
-        
-        .meta-data { font-size: 11px; color: var(--gray); display: flex; flex-direction: column; gap: 2px; }
-        .reminder { color: var(--accent); font-weight: bold; }
-        
-        .action-btns { display: flex; gap: 6px; }
-        .btn-small { padding: 8px 12px; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; color: white; width: auto; margin: 0; }
-        .edit-btn { background: #333; color: var(--blue); border: 1px solid #444; }
-        .del-btn { background: #333; color: var(--red); border: 1px solid #444; }
+        .tag-red { color: var(--red); } .tag-green { color: var(--accent); } .tag-yellow { color: var(--yellow); } .tag-blue { color: var(--blue); }
+        .meta-data { font-size: 11px; color: var(--gray); margin-top: 4px; }
         
         .auth-link { text-align: center; color: #333; font-size: 12px; margin: 30px 0; cursor: pointer; order: 4; }
     </style>
@@ -155,27 +63,23 @@
             <button class="tag-btn" id="btn-blue" onclick="setGroup('Mağaza', 'blue')">Mağaza</button>
         </div>
         <input type="datetime-local" id="taskTime">
-        <button id="mainSubmitBtn" class="add-btn" onclick="saveTask()">LİSTEYE FIRLAT</button>
+        <button class="add-btn" onclick="saveTask()">LİSTEYE FIRLAT</button>
+        
+        <hr style="border: 0.5px solid #222; margin: 20px 0;">
+        <input type="text" id="manualNotifyBody" placeholder="Anlık duyuru mesajı...">
+        <button class="notify-btn" onclick="sendManualNotification()">HERKESE BİLDİRİM AT</button>
     </div>
 
     <div id="filterSection">
         <input type="text" id="searchInput" placeholder="Görevlerde ara..." oninput="render()">
-        <div class="tag-group">
-            <button class="tag-btn" onclick="setFilter('')">Hepsi</button>
-            <button class="tag-btn" style="color:var(--red)" onclick="setFilter('Satıştan Çıktı')">Satıştan Çıktı</button>
-            <button class="tag-btn" style="color:var(--accent)" onclick="setFilter('Kampanya')">Kampanya</button>
-            <button class="tag-btn" style="color:var(--yellow)" onclick="setFilter('Bilgi')">Bilgi</button>
-            <button class="tag-btn" style="color:var(--blue)" onclick="setFilter('Mağaza')">Mağaza</button>
-        </div>
     </div>
 
     <div id="taskList"></div>
-
-    <div id="authBtn" class="auth-link" onclick="handleAuth()">Sisteme Giriş</div>
+    <div id="authBtn" class="auth-link" onclick="handleAuth()">Sisteme Giriş Yap</div>
 </div>
 
 <script>
-    // Firebase Yapılandırması
+    // --- FIREBASE AYARLARI ---
     const firebaseConfig = {
         apiKey: "AIzaSyB40uhJRRzf-7_Id7__l5babzus4u_U3Zg",
         authDomain: "ya-rabbim.firebaseapp.com",
@@ -187,204 +91,133 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database().ref('tasks');
+    const db = firebase.database();
+    const messaging = firebase.messaging();
+
+    // !!! BURAYA PANELDEKİ SERVER KEY'İ KOY !!!
+    const SERVER_KEY = "BURAYA_SERVER_KEY_GELECEK"; 
 
     let tasks = [];
     let isAdmin = localStorage.getItem('isAdmin') === 'true';
     let selectedGroup = ""; 
     let selectedColor = "";
-    let activeFilter = "";
-    let editTaskId = null;
-    let pressTimer;
 
     function init() {
         updateUI();
-        // Verileri Firebase'den Canlı Dinle
-        db.on('value', (snapshot) => {
+        db.ref('tasks').on('value', (snapshot) => {
             const data = snapshot.val();
             tasks = data ? Object.keys(data).map(key => ({ ...data[key], id: key })) : [];
             render();
         });
+        setupNotifications();
+    }
+
+    function setupNotifications() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then((reg) => {
+                messaging.getToken({ 
+                    serviceWorkerRegistration: reg, 
+                    vapidKey: "fgArsp94qOXNNZ50gDmLJGONzI99X_WOwnqJrCA-HQ4" 
+                }).then((token) => {
+                    if (token) db.ref('tokens').child(token).set(true);
+                });
+            }).catch(err => console.log("SW Error:", err));
+        }
     }
 
     function updateUI() {
-        const panel = document.getElementById('adminPanel');
-        const filter = document.getElementById('filterSection');
-        const authBtn = document.getElementById('authBtn');
-        if (isAdmin) {
-            panel.style.display = 'block';
-            filter.style.order = "2";
-            authBtn.innerText = "Yönetici Çıkışı";
-        } else {
-            panel.style.display = 'none';
-            filter.style.order = "0";
-            authBtn.innerText = "Sisteme Giriş Yap";
-        }
+        document.getElementById('adminPanel').style.display = isAdmin ? 'block' : 'none';
+        document.getElementById('authBtn').innerText = isAdmin ? "Yönetici Çıkışı" : "Sisteme Giriş Yap";
     }
-
-    function setGroup(groupName, color) {
-        const btn = document.getElementById('btn-' + color);
-        const alreadyActive = btn?.classList.contains('active');
-        document.querySelectorAll('#adminPanel .tag-btn').forEach(b => b.classList.remove('active', 'red', 'green', 'yellow', 'blue'));
-        if (alreadyActive) {
-            selectedGroup = ""; selectedColor = "";
-        } else {
-            selectedGroup = groupName; selectedColor = color;
-            btn?.classList.add('active', color);
-        }
-    }
-
-    function setFilter(cat) { activeFilter = cat; render(); }
 
     function handleAuth() {
         if (isAdmin) {
-            isAdmin = false; localStorage.setItem('isAdmin', 'false'); editTaskId = null; resetForm();
+            isAdmin = false; localStorage.setItem('isAdmin', 'false');
         } else {
-            const pass = prompt("Şifre:");
-            if (pass === "2407") { isAdmin = true; localStorage.setItem('isAdmin', 'true'); }
+            if (prompt("Şifre:") === "2407") { isAdmin = true; localStorage.setItem('isAdmin', 'true'); }
         }
         updateUI(); render();
     }
 
-    function saveTask() {
-        if (!isAdmin) return;
-        const t = document.getElementById('taskTitle');
-        const d = document.getElementById('taskTime');
-        if (!t.value.trim()) return;
+    function setGroup(name, color) {
+        selectedGroup = name; selectedColor = color;
+        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active', 'red', 'green', 'yellow', 'blue'));
+        document.getElementById('btn-' + color).classList.add('active', color);
+    }
+
+    async function saveTask() {
+        const titleInput = document.getElementById('taskTitle');
+        const timeInput = document.getElementById('taskTime');
+        if (!titleInput.value.trim()) return;
 
         const taskData = {
-            title: t.value,
-            group: selectedGroup,
-            groupColor: selectedColor,
-            time: d.value,
-            isPinned: false, // Yeni eklenende varsayılan false, düzenlemede mevcut korunacak
+            title: titleInput.value, group: selectedGroup, groupColor: selectedColor,
+            time: timeInput.value, isPinned: false, 
             created: new Date().toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
         };
 
-        if (editTaskId) {
-            // Düzenleme yaparken pin durumunu kaybetmemek için mevcut pini alıyoruz
-            const currentTask = tasks.find(x => x.id === editTaskId);
-            taskData.isPinned = currentTask ? currentTask.isPinned : false;
-            db.child(editTaskId).update(taskData);
-            editTaskId = null;
-        } else {
-            db.push(taskData);
-        }
-        resetForm();
+        db.ref('tasks').push(taskData);
+        sendPushNotification("Yeni Görev", titleInput.value);
+        
+        titleInput.value = ""; timeInput.value = "";
+        selectedGroup = ""; selectedColor = "";
+        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active', 'red', 'green', 'yellow', 'blue'));
     }
 
-    function resetForm() {
-        document.getElementById('taskTitle').value = "";
-        document.getElementById('taskTime').value = "";
-        document.getElementById('mainSubmitBtn').innerText = "LİSTEYE FIRLAT";
-        document.getElementById('mainSubmitBtn').classList.remove('update-mode');
-        selectedGroup = ""; selectedColor = "";
-        document.querySelectorAll('#adminPanel .tag-btn').forEach(b => {
-            b.classList.remove('active', 'red', 'green', 'yellow', 'blue');
+    async function sendPushNotification(title, body) {
+        if (SERVER_KEY.includes("GELECEK")) return;
+        const tokensSnap = await db.ref('tokens').once('value');
+        const tokens = tokensSnap.val();
+        if (!tokens) return;
+
+        Object.keys(tokens).forEach(token => {
+            fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'key=' + SERVER_KEY },
+                body: JSON.stringify({ 
+                    to: token, 
+                    notification: { title, body, icon: "logo.png", click_action: window.location.href, sound: "default" },
+                    priority: "high"
+                })
+            });
         });
     }
 
-    function editTask(id) {
-        const task = tasks.find(x => x.id === id);
-        if (!task) return;
-        editTaskId = id;
-        document.getElementById('taskTitle').value = task.title;
-        document.getElementById('taskTime').value = task.time || "";
-        document.getElementById('mainSubmitBtn').innerText = "GÜNCELLE";
-        document.getElementById('mainSubmitBtn').classList.add('update-mode');
-        if (task.groupColor) setGroup(task.group, task.groupColor);
-        window.scrollTo({top:0, behavior:'smooth'});
+    async function sendManualNotification() {
+        const msg = document.getElementById('manualNotifyBody').value;
+        if (!msg) return;
+        await sendPushNotification("Duyuru", msg);
+        alert("Bildirim fırlatıldı!");
+        document.getElementById('manualNotifyBody').value = "";
     }
 
-    function togglePin(id) {
-        if (!isAdmin) return;
-        const task = tasks.find(x => x.id === id);
-        if (task) {
-            db.child(id).update({ isPinned: !task.isPinned });
-        }
-    }
-
-    function deleteTask(id) {
-        if (!isAdmin || !confirm('Silinsin mi?')) return;
-        db.child(id).remove();
-        if (editTaskId === id) resetForm();
-    }
-
-    function startPress(id) { 
-        if(isAdmin) pressTimer = setTimeout(() => {
-            if(navigator.vibrate) navigator.vibrate(50);
-            togglePin(id);
-        }, 600); 
-    }
-    function endPress() { clearTimeout(pressTimer); }
-
-    function trLower(str) { return str.replace(/İ/g, "i").replace(/I/g, "ı").toLowerCase(); }
+    function togglePin(id, current) { if(isAdmin) db.ref('tasks').child(id).update({isPinned: !current}); }
+    function deleteTask(id) { if(isAdmin && confirm('Silinsin mi?')) db.ref('tasks').child(id).remove(); }
 
     function render() {
         const list = document.getElementById('taskList');
-        const searchVal = trLower(document.getElementById('searchInput').value);
+        const search = document.getElementById('searchInput').value.toLowerCase();
         list.innerHTML = "";
-
-        let filtered = tasks.filter(item => {
-            return trLower(item.title).includes(searchVal) && (activeFilter === "" || item.group === activeFilter);
-        });
-
-        // Pinli olanlar üstte, sonra id'ye göre (yeni gelen alta veya üste tercihe göre)
-        filtered.sort((a,b) => (a.isPinned === b.isPinned) ? (b.id > a.id ? 1 : -1) : b.isPinned - a.isPinned)
+        tasks.filter(t => t.title.toLowerCase().includes(search))
+        .sort((a,b) => (b.isPinned - a.isPinned) || (b.id > a.id ? 1 : -1))
         .forEach(item => {
             const div = document.createElement('div');
             div.className = `task-item ${item.isPinned ? 'pinned' : ''}`;
-            div.onmousedown = () => startPress(item.id);
-            div.onmouseup = endPress;
-            div.ontouchstart = () => startPress(item.id);
-            div.ontouchend = endPress;
-
+            div.onclick = () => togglePin(item.id, item.isPinned);
             div.innerHTML = `
                 <div class="task-info">
                     <span class="task-title">
                         ${item.isPinned ? '📌 ' : ''}
-                        ${item.group ? `<span class="group-tag tag-${item.groupColor}">${item.group}</span>` : ''}
-                        ${item.title}
+                        ${item.group ? `<span class="group-tag tag-${item.groupColor}">${item.group}</span>` : ''}${item.title}
                     </span>
-                    <div class="meta-data">
-                        <span>${item.created}</span>
-                        ${item.time ? `<span class="reminder">🔔 ${item.time.replace('T', ' ')}</span>` : ''}
-                    </div>
+                    <div class="meta-data"><span>${item.created}</span> ${item.time ? `<span style="color:var(--accent); margin-left:10px;">🔔 ${item.time.replace('T', ' ')}</span>` : ''}</div>
                 </div>
-                ${isAdmin ? `
-                <div class="action-btns">
-                    <button class="btn-small edit-btn" onclick="event.stopPropagation(); editTask('${item.id}')">⚙️</button>
-                    <button class="btn-small del-btn" onclick="event.stopPropagation(); deleteTask('${item.id}')">✕</button>
-                </div>` : ''}
+                ${isAdmin ? `<button onclick="event.stopPropagation(); deleteTask('${item.id}')" style="width:auto; background:transparent; border:none; color:red; font-weight:bold; cursor:pointer;">✕</button>` : ''}
             `;
             list.appendChild(div);
         });
     }
-    // --- BİLDİRİM KAYIT VE İZİN SİSTEMİ ---
-const messaging = firebase.messaging();
-
-function setupNotifications() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then((registration) => {
-            messaging.getToken({ 
-                serviceWorkerRegistration: registration,
-                vapidKey: "fgArsp94qOXNNZ50gDmLJGONzI99X_WOwnqJrCA-HQ4" // Senin anahtarın
-            }).then((currentToken) => {
-                if (currentToken) {
-                    console.log("Bildirim Tokeni Alındı:", currentToken);
-                    // Bu tokeni Firebase'de bir 'tokens' altına kaydedebilirsin ki kimlere bildirim gideceği bilinsin
-                    firebase.database().ref('tokens').child(currentToken).set(true);
-                }
-            });
-        });
-    }
-}
-
-// Giriş yapınca veya sayfa açılınca izin iste
-if (isAdmin) {
-    setupNotifications();
-                 }
-    
 </script>
 </body>
-</html>
+            </html>
+
