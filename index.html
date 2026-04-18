@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>ya rabBİM</title>
+    <link rel="icon" type="image/png" href="https://files.oaiusercontent.com/file-mX0H9D8a8P23Q0L97lXW3U?se=2024-10-18T14%3A49%3A42Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1a7114b0-681b-4f9e-bc28-76672322d861.webp&sig=6Yy8Y6N0EAnX5w7hXw7hXw7hXw7hXw7hXw7hXw7hXw7hXw%3D">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0b0b0b">
+    
+    <style>
+        :root {
+            --bg: #0b0b0b;
+            --card: #161616;
+            --accent: #2ecc71;
+            --red: #ff4d4d;
+            --yellow: #f1c40f;
+            --blue: #00d2ff;
+            --text: #f0f0f0;
+            --gray: #666;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: env(safe-area-inset-top) 15px 15px 15px; 
+            margin: 0; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container { max-width: 500px; margin: auto; display: flex; flex-direction: column; }
+        
+        h2 { 
+            text-align: center; 
+            color: var(--accent); 
+            margin: 20px 0; 
+            letter-spacing: 3px; 
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+        }
+        
+        #adminPanel, #filterSection { 
+            background: var(--card); 
+            padding: 18px; 
+            border-radius: 16px; 
+            border: 1px solid #222; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        #adminPanel { order: 1; display: none; }
+        #filterSection { order: 2; }
+        #taskList { order: 3; }
+
+        input, button { 
+            width: 100%; 
+            padding: 14px; 
+            margin-top: 10px; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+            background: #000; 
+            color: white; 
+            box-sizing: border-box; 
+            outline: none; 
+            font-size: 16px; 
+        }
+
+        input:focus { border-color: var(--accent); }
+        
+        .tag-group { 
+            display: flex; 
+            gap: 8px; 
+            margin-top: 12px; 
+            overflow-x: auto; 
+            padding-bottom: 8px; 
+            scrollbar-width: none; 
+        }
+        .tag-group::-webkit-scrollbar { display: none; }
+
+        .tag-btn { 
+            padding: 8px 14px; 
+            font-size: 12px; 
+            background: #222; 
+            border: 1px solid #333; 
+            cursor: pointer; 
+            color: #999; 
+            border-radius: 8px; 
+            white-space: nowrap; 
+            width: auto;
+            margin-top: 0;
+            font-weight: 600;
+        }
+        
+        .tag-btn.active.red { border-color: var(--red); color: var(--red); background: rgba(255,77,77,0.1); }
+        .tag-btn.active.green { border-color: var(--accent); color: var(--accent); background: rgba(46,204,113,0.1); }
+        .tag-btn.active.yellow { border-color: var(--yellow); color: var(--yellow); background: rgba(241,196,15,0.1); }
+        .tag-btn.active.blue { border-color: var(--blue); color: var(--blue); background: rgba(0,210,255,0.1); }
+
+        .add-btn { background: var(--accent); border: none; font-weight: 800; cursor: pointer; color: #000; margin-top: 15px; }
+        .update-mode { background: var(--blue) !important; }
+
+        .task-item { 
+            background: var(--card); 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            border-radius: 14px; 
+            border: 1px solid #222; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .task-item.pinned { border-left: 5px solid var(--yellow); background: #1a1a10; }
+        
+        .task-info { flex-grow: 1; min-width: 0; padding-right: 10px; }
+        .task-title { font-size: 16px; font-weight: 600; display: block; margin-bottom: 5px; line-height: 1.4; overflow-wrap: break-word; }
+        
+        .group-tag { font-weight: 800; text-transform: uppercase; margin-right: 6px; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; }
+        .tag-red { color: var(--red); }
+        .tag-green { color: var(--accent); }
+        .tag-yellow { color: var(--yellow); }
+        .tag-blue { color: var(--blue); }
+        
+        .meta-data { font-size: 11px; color: var(--gray); display: flex; flex-direction: column; gap: 2px; }
+        .reminder { color: var(--accent); font-weight: bold; }
+        
+        .action-btns { display: flex; gap: 6px; }
+        .btn-small { padding: 8px 12px; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; color: white; width: auto; margin: 0; }
+        .edit-btn { background: #333; color: var(--blue); border: 1px solid #444; }
+        .del-btn { background: #333; color: var(--red); border: 1px solid #444; }
+        
+        .auth-link { text-align: center; color: #333; font-size: 12px; margin: 30px 0; cursor: pointer; order: 4; }
+    </style>
+</head>
+<body onload="init()">
+
+<div class="container">
+    <h2>ya rabBİM</h2>
+    
+    <div id="adminPanel">
+        <input type="text" id="taskTitle" placeholder="Bugün ne yapıyoruz?">
+        <div class="tag-group">
+            <button class="tag-btn" id="btn-red" onclick="setGroup('Satıştan Çıktı', 'red')">Satıştan Çıktı</button>
+            <button class="tag-btn" id="btn-green" onclick="setGroup('Kampanya', 'green')">Kampanya</button>
+            <button class="tag-btn" id="btn-yellow" onclick="setGroup('Bilgi', 'yellow')">Bilgi</button>
+            <button class="tag-btn" id="btn-blue" onclick="setGroup('Mağaza', 'blue')">Mağaza</button>
+        </div>
+        <input type="datetime-local" id="taskTime">
+        <button id="mainSubmitBtn" class="add-btn" onclick="saveTask()">LİSTEYE FIRLAT</button>
+    </div>
+
+    <div id="filterSection">
+        <input type="text" id="searchInput" placeholder="Görevlerde ara..." oninput="render()">
+        <div class="tag-group">
+            <button class="tag-btn" onclick="setFilter('')">Hepsi</button>
+            <button class="tag-btn" style="color:var(--red)" onclick="setFilter('Satıştan Çıktı')">Satıştan Çıktı</button>
+            <button class="tag-btn" style="color:var(--accent)" onclick="setFilter('Kampanya')">Kampanya</button>
+            <button class="tag-btn" style="color:var(--yellow)" onclick="setFilter('Bilgi')">Bilgi</button>
+            <button class="tag-btn" style="color:var(--blue)" onclick="setFilter('Mağaza')">Mağaza</button>
+        </div>
+    </div>
+
+    <div id="taskList"></div>
+
+    <div id="authBtn" class="auth-link" onclick="handleAuth()">Sisteme Giriş</div>
+</div>
+
+<script>
+    let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+    let isAdmin = localStorage.getItem('isAdmin') === 'true';
+    let selectedGroup = ""; 
+    let selectedColor = "";
+    let activeFilter = "";
+    let editTaskId = null;
+    let pressTimer;
+
+    function init() { updateUI(); render(); }
+
+    function updateUI() {
+        const panel = document.getElementById('adminPanel');
+        const filter = document.getElementById('filterSection');
+        const authBtn = document.getElementById('authBtn');
+        if (isAdmin) {
+            panel.style.display = 'block';
+            filter.style.order = "2";
+            authBtn.innerText = "Yönetici Çıkışı";
+        } else {
+            panel.style.display = 'none';
+            filter.style.order = "0";
+            authBtn.innerText = "Sisteme Giriş Yap";
+        }
+    }
+
+    function setGroup(groupName, color) {
+        const btn = document.getElementById('btn-' + color);
+        const alreadyActive = btn?.classList.contains('active');
+        document.querySelectorAll('#adminPanel .tag-btn').forEach(b => b.classList.remove('active', 'red', 'green', 'yellow', 'blue'));
+        if (alreadyActive) {
+            selectedGroup = ""; selectedColor = "";
+        } else {
+            selectedGroup = groupName; selectedColor = color;
+            btn?.classList.add('active', color);
+        }
+    }
+
+    function setFilter(cat) { activeFilter = cat; render(); }
+
+    function handleAuth() {
+        if (isAdmin) {
+            isAdmin = false; localStorage.setItem('isAdmin', 'false'); editTaskId = null; resetForm();
+        } else {
+            const pass = prompt("Şifre:");
+            if (pass === "2407") { isAdmin = true; localStorage.setItem('isAdmin', 'true'); }
+        }
+        updateUI(); render();
+    }
+
+    function saveTask() {
+        if (!isAdmin) return;
+        const t = document.getElementById('taskTitle');
+        const d = document.getElementById('taskTime');
+        if (!t.value.trim()) return;
+
+        if (editTaskId) {
+            const idx = tasks.findIndex(x => x.id === editTaskId);
+            if (idx !== -1) {
+                tasks[idx].title = t.value; tasks[idx].group = selectedGroup;
+                tasks[idx].groupColor = selectedColor; tasks[idx].time = d.value;
+            }
+            editTaskId = null;
+        } else {
+            tasks.push({
+                id: Date.now(), title: t.value, group: selectedGroup, groupColor: selectedColor,
+                time: d.value, isPinned: false,
+                created: new Date().toLocaleString('tr-TR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
+            });
+        }
+        resetForm(); saveAndRender();
+    }
+
+    function resetForm() {
+        document.getElementById('taskTitle').value = "";
+        document.getElementById('taskTime').value = "";
+        document.getElementById('mainSubmitBtn').innerText = "LİSTEYE FIRLAT";
+        document.getElementById('mainSubmitBtn').classList.remove('update-mode');
+        selectedGroup = ""; selectedColor = "";
+        document.querySelectorAll('#adminPanel .tag-btn').forEach(b => b.className = 'tag-btn');
+    }
+
+    function editTask(id) {
+        const task = tasks.find(x => x.id === id);
+        if (!task) return;
+        editTaskId = id;
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskTime').value = task.time || "";
+        document.getElementById('mainSubmitBtn').innerText = "GÜNCELLE";
+        document.getElementById('mainSubmitBtn').classList.add('update-mode');
+        if (task.groupColor) setGroup(task.group, task.groupColor);
+        window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function togglePin(id) {
+        if (!isAdmin) return;
+        const task = tasks.find(x => x.id === id);
+        if (task) { task.isPinned = !task.isPinned; saveAndRender(); }
+    }
+
+    function deleteTask(id) {
+        if (!isAdmin || !confirm('Silinsin mi?')) return;
+        tasks = tasks.filter(x => x.id !== id);
+        saveAndRender();
+    }
+
+    function saveAndRender() { localStorage.setItem('myTasks', JSON.stringify(tasks)); render(); }
+
+    function startPress(id) { if(isAdmin) pressTimer = setTimeout(() => {
+        navigator.vibrate?.(50);
+        togglePin(id);
+    }, 600); }
+    function endPress() { clearTimeout(pressTimer); }
+
+    function trLower(str) { return str.replace(/İ/g, "i").replace(/I/g, "ı").toLowerCase(); }
+
+    function render() {
+        const list = document.getElementById('taskList');
+        const searchVal = trLower(document.getElementById('searchInput').value);
+        list.innerHTML = "";
+
+        let filtered = tasks.filter(item => {
+            return trLower(item.title).includes(searchVal) && (activeFilter === "" || item.group === activeFilter);
+        });
+
+        filtered.sort((a,b) => (a.isPinned === b.isPinned) ? b.id - a.id : b.isPinned - a.isPinned)
+        .forEach(item => {
+            const div = document.createElement('div');
+            div.className = `task-item ${item.isPinned ? 'pinned' : ''}`;
+            div.onmousedown = () => startPress(item.id);
+            div.onmouseup = endPress;
+            div.ontouchstart = () => startPress(item.id);
+            div.ontouchend = endPress;
+
+            div.innerHTML = `
+                <div class="task-info">
+                    <span class="task-title">
+                        ${item.isPinned ? '📌 ' : ''}
+                        ${item.group ? `<span class="group-tag tag-${item.groupColor}">${item.group}</span>` : ''}
+                        ${item.title}
+                    </span>
+                    <div class="meta-data">
+                        <span>${item.created}</span>
+                        ${item.time ? `<span class="reminder">🔔 ${item.time.replace('T', ' ')}</span>` : ''}
+                    </div>
+                </div>
+                ${isAdmin ? `
+                <div class="action-btns">
+                    <button class="btn-small edit-btn" onclick="event.stopPropagation(); editTask(${item.id})">⚙️</button>
+                    <button class="btn-small del-btn" onclick="event.stopPropagation(); deleteTask(${item.id})">✕</button>
+                </div>` : ''}
+            `;
+            list.appendChild(div);
+        });
+    }
+</script>
+</body>
+</html>
