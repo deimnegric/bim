@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>ya rabBİM</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/jpg" href="1776551190145.jpg">
+    <link rel="apple-touch-icon" href="1776551190145.jpg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,7 +16,7 @@
 
     <style>
         :root { --bg: #0b0b0b; --card: #161616; --accent: #2ecc71; --red: #ff4d4d; --yellow: #f1c40f; --blue: #00d2ff; --text: #f0f0f0; --gray: #666; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: env(safe-area-inset-top) 15px 15px 15px; margin: 0; user-select: none; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: env(safe-area-inset-top) 15px 15px 15px; margin: 0; user-select: none; -webkit-touch-callout: none; }
         .container { max-width: 500px; margin: auto; display: flex; flex-direction: column; }
         h2 { text-align: center; color: var(--accent); margin: 20px 0; letter-spacing: 3px; font-weight: 700; }
         #adminPanel, #filterSection { background: var(--card); padding: 18px; border-radius: 16px; border: 1px solid #222; margin-bottom: 15px; }
@@ -31,12 +31,14 @@
         .tag-btn.active.yellow { border-color: var(--yellow); color: var(--yellow); }
         .tag-btn.active.blue { border-color: var(--blue); color: var(--blue); }
         .add-btn { background: var(--accent); border: none; font-weight: 800; color: #000; }
-        .task-item { background: var(--card); padding: 16px; margin-bottom: 12px; border-radius: 14px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .task-item { background: var(--card); padding: 16px; margin-bottom: 12px; border-radius: 14px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; transition: transform 0.1s; }
+        .task-item:active { transform: scale(0.98); }
         .task-item.pinned { border-left: 5px solid var(--yellow); }
         .group-tag { font-weight: 800; text-transform: uppercase; margin-right: 6px; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; }
         .tag-red { color: var(--red); } .tag-green { color: var(--accent); } .tag-yellow { color: var(--yellow); } .tag-blue { color: var(--blue); }
         .meta-data { font-size: 11px; color: var(--gray); }
         .auth-link { text-align: center; color: #333; font-size: 12px; margin: 30px 0; cursor: pointer; order: 4; }
+        .actions { display: flex; gap: 10px; }
     </style>
 </head>
 <body onload="init()">
@@ -82,13 +84,13 @@
     const db = firebase.database();
     const messaging = firebase.messaging();
     
-    // !!! BURAYA CLOUD'DAN ALDIĞIN KEY'İ YAPIŞTIR !!!
     const SERVER_KEY = "a5ad65b44b6226d86d257652ee8d2d9f8958e213"; 
 
     let tasks = [];
     let isAdmin = localStorage.getItem('isAdmin') === 'true';
     let selectedGroup = ""; 
     let selectedColor = "";
+    let pressTimer;
 
     function init() {
         updateUI();
@@ -149,6 +151,33 @@
         t.value = ""; d.value = "";
     }
 
+    // --- YENİ EKLENEN FONKSİYONLAR ---
+    function deleteTask(id) { if(isAdmin && confirm('Silinsin mi?')) db.ref('tasks').child(id).remove(); }
+
+    function editTask(id, currentTitle) {
+        if(!isAdmin) return;
+        const newTitle = prompt("Görevi Düzenle:", currentTitle);
+        if (newTitle !== null && newTitle.trim() !== "") {
+            db.ref('tasks').child(id).update({ title: newTitle });
+        }
+    }
+
+    function togglePin(id, currentState) {
+        if(!isAdmin) return;
+        db.ref('tasks').child(id).update({ isPinned: !currentState });
+    }
+
+    function handleLongPress(id, currentState) {
+        if(!isAdmin) return;
+        pressTimer = setTimeout(() => {
+            togglePin(id, currentState);
+            navigator.vibrate(50); // Mobil için geri bildirim
+        }, 800);
+    }
+
+    function cancelLongPress() { clearTimeout(pressTimer); }
+    // -------------------------------
+
     async function sendPushNotification(title, body) {
         const tokensSnap = await db.ref('tokens').once('value');
         const tokens = tokensSnap.val();
@@ -171,21 +200,34 @@
         document.getElementById('manualNotifyBody').value = "";
     }
 
-    function deleteTask(id) { if(isAdmin && confirm('Silinsin mi?')) db.ref('tasks').child(id).remove(); }
-
     function render() {
         const list = document.getElementById('taskList');
+        const search = document.getElementById('searchInput').value.toLowerCase();
         list.innerHTML = "";
-        tasks.sort((a,b) => (b.isPinned - a.isPinned) || (b.id > a.id ? 1 : -1))
+        
+        tasks
+        .filter(t => t.title.toLowerCase().includes(search))
+        .sort((a,b) => (b.isPinned - a.isPinned) || (b.id > a.id ? 1 : -1))
         .forEach(item => {
             const div = document.createElement('div');
             div.className = `task-item ${item.isPinned ? 'pinned' : ''}`;
+            
+            // Basılı tutma eventleri
+            div.onmousedown = () => handleLongPress(item.id, item.isPinned);
+            div.onmouseup = cancelLongPress;
+            div.ontouchstart = () => handleLongPress(item.id, item.isPinned);
+            div.ontouchend = cancelLongPress;
+
             div.innerHTML = `
                 <div class="task-info">
                     <span class="task-title">${item.group ? `<span class="group-tag tag-${item.groupColor}">${item.group}</span>` : ''}${item.title}</span>
                     <div class="meta-data"><span>${item.created}</span> ${item.time ? `<span> 🔔 ${item.time}</span>` : ''}</div>
                 </div>
-                ${isAdmin ? `<button onclick="deleteTask('${item.id}')" style="width:auto; background:transparent; border:none; color:red;">✕</button>` : ''}
+                ${isAdmin ? `
+                <div class="actions">
+                    <button onclick="editTask('${item.id}', '${item.title}')" style="width:auto; background:transparent; border:none; color:var(--blue); font-size:18px;">✎</button>
+                    <button onclick="deleteTask('${item.id}')" style="width:auto; background:transparent; border:none; color:red; font-size:18px;">✕</button>
+                </div>` : ''}
             `;
             list.appendChild(div);
         });
@@ -193,3 +235,4 @@
 </script>
 </body>
 </html>
+
