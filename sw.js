@@ -13,7 +13,7 @@ messaging.onBackgroundMessage((payload) => {
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
-        icon: 'logo.png' // Klasöründe logo.png yoksa burası boş görünebilir
+        icon: '1776551190145.jpg' // Klasöründe logo.png yoksa burası boş görünebilir
     };
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
